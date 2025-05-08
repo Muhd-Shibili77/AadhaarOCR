@@ -22,7 +22,7 @@ const useAadhaarOCR = () => {
   
       try {
         const response = await axiosInstance.post(
-          '/parse-aadhaar',
+          '/api/parse-aadhaar',
           formData,
           {
             headers: {

@@ -1,11 +1,15 @@
 import { Request, Response } from "express";
 import { StatusCode } from "../constants/statusCode";
-import { createWorker } from "tesseract.js";
+import { createWorker,Worker } from "tesseract.js";
 import extractBackInfo from "../utils/extractBack";
 import extractFrontInfo from "../utils/extractFront";
 import isFrontSide from "../utils/isFrontSide";
+import fs from 'fs/promises';
 
 export const handleOCR = async (req:Request,res:Response):Promise<void>=>{
+    let frontPath = '';
+  let backPath = '';
+  let worker: Worker | null = null;
     try {
         if (!req.files || typeof req.files !== 'object' || !('front' in req.files) || !('back' in req.files)) {
             res.status(StatusCode.BAD_REQUEST).json({ success: false, message: 'Files are missing or invalid' });
@@ -15,10 +19,10 @@ export const handleOCR = async (req:Request,res:Response):Promise<void>=>{
           const frontImages = files['front'];
           const backImages = files['back'];
 
-          const frontPath = frontImages[0].path
-          const backPath = backImages[0].path
+           frontPath = frontImages[0].path
+           backPath = backImages[0].path
 
-          const worker = await createWorker('eng') 
+           worker = await createWorker('eng') 
 
           const [frontResult, backResult] = await Promise.all([
             worker.recognize(frontPath),
@@ -41,8 +45,6 @@ export const handleOCR = async (req:Request,res:Response):Promise<void>=>{
           const frontData = extractFrontInfo(frontText)
           const backData = extractBackInfo(backText)
 
-
-
           const result ={
             name:frontData.name,
             dob:frontData.dob,
@@ -56,5 +58,9 @@ export const handleOCR = async (req:Request,res:Response):Promise<void>=>{
     } catch (error) {
         console.error("OCR error:", error);
         res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: "Something went wrong with OCR." });
+    }finally{
+      if(worker)await worker.terminate();
+      if(frontPath)await fs.unlink(frontPath).catch(() => {});
+      if(backPath)await fs.unlink(backPath).catch(() => {});
     }
 }

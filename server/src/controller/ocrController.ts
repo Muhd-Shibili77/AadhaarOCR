@@ -3,6 +3,7 @@ import { StatusCode } from "../constants/statusCode";
 import { createWorker } from "tesseract.js";
 import extractBackInfo from "../utils/extractBack";
 import extractFrontInfo from "../utils/extractFront";
+import isFrontSide from "../utils/isFrontSide";
 
 export const handleOCR = async (req:Request,res:Response):Promise<void>=>{
     try {
@@ -29,6 +30,13 @@ export const handleOCR = async (req:Request,res:Response):Promise<void>=>{
           const frontText = frontResult.data.text;
           const backText = backResult.data.text;
          
+          if (!isFrontSide(frontText)) {
+            res.status(StatusCode.BAD_REQUEST).json({
+              success: false,
+              message: "The uploaded front image does not appear to be the front side of Aadhaar card.",
+            });
+            return;
+          }
 
           const frontData = extractFrontInfo(frontText)
           const backData = extractBackInfo(backText)

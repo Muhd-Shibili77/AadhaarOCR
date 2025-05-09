@@ -30,7 +30,7 @@ const useAadhaarOCR = () => {
             },
           }
         );
-        
+        console.log(response.data)
         if (response.data.success) {
           setDisplayData(response.data)
           setOcrResult(JSON.stringify(response.data, null, 2));
@@ -39,7 +39,7 @@ const useAadhaarOCR = () => {
         }
       } catch (err) {
         console.error(err);
-        setError("Server error while performing OCR.");
+        setError(err.response.data.message || "Server error while performing OCR.");
       } finally {
         setLoading(false);
       }
